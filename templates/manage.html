@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Tags - {{ super() }}{% endblock %}
+
+{% block content %}
+    <div class="pb-2 mt-4 mb-2 border-bottom">
+        <h1>Manage Skills & Standards</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Skills</h2>
+            <ul class="list-group mb-3">
+                {% for skill in all_skills %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ skill.name }}
+                    <form action="{{ url_for('delete_skill', skill_id=skill.id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </li>
+                {% else %}
+                <li class="list-group-item">No skills found.</li>
+                {% endfor %}
+            </ul>
+
+            <form class="row g-3" action="{{ url_for('manage_tags') }}" method="POST">
+                <input type="hidden" name="type" value="skill">
+                <div class="col-auto flex-grow-1">
+                    <input type="text" class="form-control" name="name" placeholder="Add new skill" required>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Add Skill</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-6">
+            <h2>Standards</h2>
+             <ul class="list-group mb-3">
+                {% for standard in all_standards %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ standard.name }}
+                    <form action="{{ url_for('delete_standard', standard_id=standard.id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </li>
+                {% else %}
+                <li class="list-group-item">No standards found.</li>
+                {% endfor %}
+            </ul>
+
+            <form class="row g-3" action="{{ url_for('manage_tags') }}" method="POST">
+                <input type="hidden" name="type" value="standard">
+                <div class="col-auto flex-grow-1">
+                    <input type="text" class="form-control" name="name" placeholder="Add new standard" required>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Add Standard</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

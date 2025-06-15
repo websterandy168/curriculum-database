@@ -1,0 +1,17 @@
+# Secret environment variables
+.env
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+
+# Local database file
+database.db
+
+# Instance folder that can be created by Flask
+instance/
+
+# Common virtual environment folder names
+venv/
+*.env/
+env/

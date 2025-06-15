@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - {{ super() }}{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1>{{ title }}</h1>
+            <hr class="mb-4">
+            <form method="POST" enctype="multipart/form-data" novalidate>
+                {{ form.hidden_tag() }} <div class="mb-3">{{ form.title.label(class="form-label") }}{{ form.title(class="form-control") }}</div>
+                <div class="mb-3">{{ form.description.label(class="form-label") }}{{ form.description(class="form-control", rows="2") }}</div>
+                <div class="mb-3">{{ form.grade_level.label(class="form-label") }}{{ form.grade_level(class="form-select") }}</div>
+                <hr>
+                <div class="mb-3">{{ form.image.label(class="form-label") }}{{ form.image(class="form-control") }}</div>
+                <div class="mb-3">
+                    {{ form.body_text.label(class="form-label") }}
+                    {{ form.body_text(class="form-control", rows="8", placeholder="<p>What is 2+2?</p><p>Use the formula $$a^2+b^2=c^2$$ to solve.</p>") }}
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.skills.label(class="form-label") }}
+                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                            {% for subfield in form.skills %}
+                                <div class="form-check">
+                                    {{ subfield(class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.standards.label(class="form-label") }}
+                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                           {% for subfield in form.standards %}
+                                <div class="form-check">
+                                    {{ subfield(class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-3">
+                            {{ form.new_standards.label(class="form-label") }}
+                            {{ form.new_standards(class="form-control", placeholder="e.g., CCSS.MATH.4.NBT.A.1, ...") }}
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4">
+                <div class="d-grid">{{ form.submit(class="btn btn-primary btn-lg") }}</div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

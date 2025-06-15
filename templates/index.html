@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Homepage - {{ super() }}{% endblock %}
+
+{% block content %}
+    <div class="p-5 mb-4 bg-light rounded-3">
+        <div class="container-fluid py-5">
+            <h1 class="display-5 fw-bold">Filter Tasks</h1>
+            <form method="GET" action="{{ url_for('index') }}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md"><label for="grade" class="form-label">Grade</label><select name="grade" id="grade" class="form-select"><option value="">All Grades</option>{% for grade in grade_levels %}<option value="{{ grade }}" {% if grade == request.args.get('grade') %}selected{% endif %}>{{ grade }}</option>{% endfor %}</select></div>
+                    <div class="col-md"><label for="skill_id" class="form-label">Skill</label><select name="skill_id" id="skill_id" class="form-select"><option value="">All Skills</option>{% for skill in all_skills %}<option value="{{ skill.id }}" {% if skill.id|string == request.args.get('skill_id') %}selected{% endif %}>{{ skill.name }}</option>{% endfor %}</select></div>
+                    <div class="col-md"><label for="q" class="form-label">Title Contains</label><input type="text" name="q" id="q" value="{{ request.args.get('q', '') }}" class="form-control"></div>
+                    <div class="col-md-auto"><button type="submit" class="btn btn-primary">Filter</button><a href="{{ url_for('index') }}" class="btn btn-secondary">Clear</a></div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <h2>Task Results</h2>
+    {% for task in tasks %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <h5 class="card-title">{{ task.title }} <small class="text-muted">({{ task.grade_level }})</small></h5>
+                    <div class="d-flex align-items-center">
+                        <div class="form-check form-switch me-3">
+                            <input class="form-check-input builder-checkbox" type="checkbox" role="switch" 
+                                   id="builder_check_{{ task.id }}" data-task-id="{{ task.id }}"
+                                   {% if task.id in builder_task_ids %}checked{% endif %}>
+                            <label class="form-check-label" for="builder_check_{{ task.id }}">Add to Builder</label>
+                        </div>
+                        {% if current_user.is_authenticated %}
+                        <div>
+                            <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <form action="{{ url_for('delete_task', task_id=task.id) }}" method="POST" onsubmit="return confirm('Are you sure?');" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <p class="card-text"><small class="text-muted">{{ task.description }}</small></p>
+                <hr>
+                <div class="task-content">
+                    {% if task.image_path %}
+                        <img src="{{ url_for('static', filename=task.image_path) }}" alt="{{ task.title }}" class="img-fluid rounded mb-3">
+                    {% endif %}
+                    <div class="task-body">
+                        {{ task.body_text | safe }}
+                    </div>
+                </div>
+                <hr>
+                <div class="mt-2">
+                    <strong>Skills:</strong>
+                    {% for skill in task.skills %}<span class="badge bg-secondary">{{ skill.name }}</span>{% endfor %}
+                </div>
+                <div class="mt-2">
+                    <strong>Standards:</strong>
+                    {% for standard in task.standards %}<span class="badge bg-light text-dark border">{{ standard.name }}</span>{% endfor %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <p class="alert alert-warning">No tasks found matching your criteria.</p>
+    {% endfor %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the CSRF token from the meta tag we added in base.html
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            const builderCheckboxes = document.querySelectorAll('.builder-checkbox');
+            const builderCountSpan = document.getElementById('builder-count');
+
+            builderCheckboxes.forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    const taskId = this.dataset.taskId;
+                    
+                    fetch('/update_builder', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Add the token to the request header
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ task_id: parseInt(taskId) }) // Ensure task_id is an integer
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            // If we get a 403 or other error, handle it here
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            builderCountSpan.textContent = data.count;
+                        } else {
+                            console.error('Failed to update builder:', data.error);
+                            this.checked = !this.checked;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Your selection was not saved. Please reload the page.');
+                        this.checked = !this.checked;
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}

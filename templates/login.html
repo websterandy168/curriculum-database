@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Login - {{ super() }}{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card mt-5">
+                <div class="card-body">
+                    <h2 class="card-title text-center">Admin Login</h2>
+                    <form method="POST" action="" novalidate>
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.username.label(class="form-label") }}
+                            {% if form.username.errors %}
+                                {{ form.username(class_="form-control is-invalid") }}
+                                {% for error in form.username.errors %}<div class="invalid-feedback"><span>{{ error }}</span></div>{% endfor %}
+                            {% else %}
+                                {{ form.username(class_="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.password.label(class="form-label") }}
+                            {% if form.password.errors %}
+                                {{ form.password(class_="form-control is-invalid") }}
+                                {% for error in form.password.errors %}<div class="invalid-feedback"><span>{{ error }}</span></div>{% endfor %}
+                            {% else %}
+                                {{ form.password(class_="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="d-grid">
+                            {{ form.submit(class_="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <small class="text-muted">Please log in with your admin credentials.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

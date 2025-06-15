@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Worksheet Builder - {{ super() }}{% endblock %}
+
+{% block content %}
+    <div class="d-print-none">
+        <div class="d-flex justify-content-between align-items-center pb-2 mt-4 mb-2 border-bottom">
+            <h1>Worksheet Builder</h1>
+            <button class="btn btn-primary" onclick="window.print();">Print Worksheet</button>
+        </div>
+        <p class="lead">Assemble tasks into a worksheet and give it a title.</p>
+        <div class="row g-3 align-items-end p-3 bg-light border rounded mb-4">
+            <div class="col-auto flex-grow-1">
+                <label for="title-input" class="form-label">Worksheet Title:</label>
+                <input type="text" class="form-control" name="title" id="title-input" value="{{ title }}">
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-secondary" onclick="updateTitle()">Update Title</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="worksheet-content">
+        <div class="print-header-buffer"></div>
+
+        <header class="worksheet-header mb-5">
+            <table style="width: 100%; border-collapse: collapse; font-size: 1.1rem;">
+                <tbody>
+                    <tr>
+                        <td style="padding-right: 10px; white-space: nowrap;"><strong>Name:</strong></td>
+                        <td style="width: 60%; border-bottom: 1px solid #333;"></td>
+                        <td style="padding-left: 20px; padding-right: 10px; white-space: nowrap;"><strong>Date:</strong></td>
+                        <td style="width: 40%; border-bottom: 1px solid #333;"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <h1 class="text-center mt-4">{{ title }}</h1>
+        </header>
+
+        <div class="worksheet-assembly">
+            {% for task in tasks %}
+                <div class="task-container pt-3 mb-4">
+                    <div class="task-content">
+                        {% if task.image_path %}
+                            <img src="{{ url_for('static', filename=task.image_path) }}" alt="{{ task.title }}" class="img-fluid rounded mb-3">
+                        {% endif %}
+                        <div class="task-body">
+                            {{ task.body_text | safe }}
+                        </div>
+                    </div>
+                </div>
+                {% if not loop.last %}
+                    <hr style="border: none; border-top: 2px dashed #ccc;" class="my-4 d-print-none">
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info d-print-none">
+                    Your worksheet builder is empty. Go to the <a href="{{ url_for('index') }}">homepage</a> and check the "Add to Builder" box on some tasks to get started.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+
+    <style>
+        @media print {
+            .print-header-buffer {
+                /* This creates the invisible buffer at the top of the printed page */
+                height: 0.75in; 
+            }
+            body { padding-top: 1em; font-size: 12pt; }
+            .d-print-none { display: none !important; }
+            .task-container { page-break-inside: avoid; }
+            .worksheet-content { border: none; box-shadow: none; }
+            .worksheet-header {
+                color: black !important;
+                border-bottom: 2px solid #000;
+                padding-bottom: 1rem;
+                margin-bottom: 2rem !important;
+            }
+        }
+    </style>
+    
+    <script>
+        function updateTitle() {
+            const titleValue = document.getElementById('title-input').value;
+            const newUrl = "{{ url_for('builder') }}?title=" + encodeURIComponent(titleValue);
+            window.location.href = newUrl;
+        }
+    </script>
+{% endblock %}
