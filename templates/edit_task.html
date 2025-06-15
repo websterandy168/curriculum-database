@@ -6,9 +6,12 @@
             <h1>{{ title }}</h1>
             <hr class="mb-4">
             <form method="POST" enctype="multipart/form-data" novalidate>
-                {{ form.hidden_tag() }} <div class="mb-3">{{ form.title.label(class="form-label") }}{{ form.title(class="form-control") }}</div>
-                <div class="mb-3">{{ form.description.label(class="form-label") }}{{ form.description(class="form-control", rows="2") }}</div>
-                <div class="mb-3">{{ form.grade_level.label(class="form-label") }}{{ form.grade_level(class="form-select") }}</div>
+                {{ form.hidden_tag() }} <div class="mb-3">{{ form.title.label(class="form-label") }}
+                    {{ form.title(class_="form-control") }}</div>
+                <div class="mb-3">{{ form.description.label(class="form-label") }}
+                    {{ form.description(class_="form-control", rows="2") }}</div>
+                <div class="mb-3">{{ form.grade_level.label(class="form-label") }}
+                    {{ form.grade_level(class_="form-select") }}</div>
                 <div class="mb-3">
                     <label class="form-label">Current Image</label>
                     {% if task.image_path %}
@@ -16,9 +19,10 @@
                     {% else %}
                         <div class="alert alert-secondary">No image uploaded for this task.</div>
                     {% endif %}
-                    <p class="form-text">Note: To change an image, please create a new task. Image uploads are not supported during editing.</p>
+                    <p class="form-text">Note: Changing an image is not supported during an edit.</p>
                 </div>
-                <div class="mb-3">{{ form.body_text.label(class="form-label") }}{{ form.body_text(class="form-control", rows="8") }}</div>
+                <div class="mb-3">{{ form.body_text.label(class="form-label") }}
+                    {{ form.body_text(class_="form-control", rows="8") }}</div>
                 <hr>
                 <div class="row">
                      <div class="col-md-6 mb-3">
@@ -26,8 +30,8 @@
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
                             {% for subfield in form.skills %}
                                 <div class="form-check">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
+                                    {{ subfield(class_="form-check-input") }}
+                                    {{ subfield.label(class_="form-check-label") }}
                                 </div>
                             {% endfor %}
                         </div>
@@ -37,15 +41,15 @@
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
                            {% for subfield in form.standards %}
                                 <div class="form-check">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
+                                    {{ subfield(class_="form-check-input") }}
+                                    {{ subfield.label(class_="form-check-label") }}
                                 </div>
                             {% endfor %}
                         </div>
                     </div>
                 </div>
                 <hr class="my-4">
-                <div class="d-grid">{{ form.submit(class="btn btn-primary btn-lg", value="Save Changes") }}</div>
+                <div class="d-grid">{{ form.submit(class_="btn btn-primary btn-lg", value="Save Changes") }}</div>
             </form>
         </div>
     </div>
