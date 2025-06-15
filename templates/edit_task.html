@@ -6,12 +6,9 @@
             <h1>{{ title }}</h1>
             <hr class="mb-4">
             <form method="POST" enctype="multipart/form-data" novalidate>
-                {{ form.hidden_tag() }} <div class="mb-3">{{ form.title.label(class="form-label") }}
-                    {{ form.title(class_="form-control") }}</div>
-                <div class="mb-3">{{ form.description.label(class="form-label") }}
-                    {{ form.description(class_="form-control", rows="2") }}</div>
-                <div class="mb-3">{{ form.grade_level.label(class="form-label") }}
-                    {{ form.grade_level(class_="form-select") }}</div>
+                {{ form.hidden_tag() }} <div class="mb-3">{{ form.title.label(class="form-label") }}{{ form.title(class_="form-control") }}</div>
+                <div class="mb-3">{{ form.description.label(class="form-label") }}{{ form.description(class_="form-control", rows="2") }}</div>
+                <div class="mb-3">{{ form.grade_level.label(class="form-label") }}{{ form.grade_level(class_="form-select") }}</div>
                 <div class="mb-3">
                     <label class="form-label">Current Image</label>
                     {% if task.image_path %}
@@ -21,28 +18,27 @@
                     {% endif %}
                     <p class="form-text">Note: Changing an image is not supported during an edit.</p>
                 </div>
-                <div class="mb-3">{{ form.body_text.label(class="form-label") }}
-                    {{ form.body_text(class_="form-control", rows="8") }}</div>
+                <div class="mb-3">{{ form.body_text.label(class="form-label") }}{{ form.body_text(class_="form-control", rows="8") }}</div>
                 <hr>
                 <div class="row">
                      <div class="col-md-6 mb-3">
-                        {{ form.skills.label(class="form-label") }}
+                        <label class="form-label">Skills</label>
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                            {% for subfield in form.skills %}
+                            {% for choice_id, choice_label in form.skills.choices %}
                                 <div class="form-check">
-                                    {{ subfield(class_="form-check-input") }}
-                                    {{ subfield.label(class_="form-check-label") }}
+                                    <input type="checkbox" name="skills" value="{{ choice_id }}" class="form-check-input" id="skill_{{ choice_id }}" {% if choice_id in form.skills.data %}checked{% endif %}>
+                                    <label class="form-check-label" for="skill_{{ choice_id }}">{{ choice_label }}</label>
                                 </div>
                             {% endfor %}
                         </div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        {{ form.standards.label(class="form-label") }}
+                        <label class="form-label">Standards</label>
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                           {% for subfield in form.standards %}
+                           {% for choice_id, choice_label in form.standards.choices %}
                                 <div class="form-check">
-                                    {{ subfield(class_="form-check-input") }}
-                                    {{ subfield.label(class_="form-check-label") }}
+                                    <input type="checkbox" name="standards" value="{{ choice_id }}" class="form-check-input" id="standard_{{ choice_id }}" {% if choice_id in form.standards.data %}checked{% endif %}>
+                                    <label class="form-check-label" for="standard_{{ choice_id }}">{{ choice_label }}</label>
                                 </div>
                             {% endfor %}
                         </div>

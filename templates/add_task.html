@@ -6,15 +6,11 @@
             <h1>{{ title }}</h1>
             <hr class="mb-4">
             <form method="POST" enctype="multipart/form-data" novalidate>
-                {{ form.hidden_tag() }} <div class="mb-3">{{ form.title.label(class="form-label") }}
-                    {{ form.title(class_="form-control") }}</div>
-                <div class="mb-3">{{ form.description.label(class="form-label") }}
-                    {{ form.description(class_="form-control", rows="2") }}</div>
-                <div class="mb-3">{{ form.grade_level.label(class="form-label") }}
-                    {{ form.grade_level(class_="form-select") }}</div>
+                {{ form.hidden_tag() }} <div class="mb-3">{{ form.title.label(class="form-label") }}{{ form.title(class_="form-control") }}</div>
+                <div class="mb-3">{{ form.description.label(class="form-label") }}{{ form.description(class_="form-control", rows="2") }}</div>
+                <div class="mb-3">{{ form.grade_level.label(class="form-label") }}{{ form.grade_level(class_="form-select") }}</div>
                 <hr>
-                <div class="mb-3">{{ form.image.label(class="form-label") }}
-                    {{ form.image(class_="form-control") }}</div>
+                <div class="mb-3">{{ form.image.label(class="form-label") }}{{ form.image(class_="form-control") }}</div>
                 <div class="mb-3">
                     {{ form.body_text.label(class="form-label") }}
                     {{ form.body_text(class_="form-control", rows="8", placeholder="<p>What is 2+2?</p><p>Use the formula $$a^2+b^2=c^2$$ to solve.</p>") }}
@@ -22,23 +18,23 @@
                 <hr>
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        {{ form.skills.label(class="form-label") }}
+                        <label class="form-label">Skills</label>
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                            {% for subfield in form.skills %}
+                            {% for choice_id, choice_label in form.skills.choices %}
                                 <div class="form-check">
-                                    {{ subfield(class_="form-check-input") }}
-                                    {{ subfield.label(class_="form-check-label") }}
+                                    <input type="checkbox" name="skills" value="{{ choice_id }}" class="form-check-input" id="skill_{{ choice_id }}">
+                                    <label class="form-check-label" for="skill_{{ choice_id }}">{{ choice_label }}</label>
                                 </div>
                             {% endfor %}
                         </div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        {{ form.standards.label(class="form-label") }}
+                        <label class="form-label">Standards</label>
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                           {% for subfield in form.standards %}
+                           {% for choice_id, choice_label in form.standards.choices %}
                                 <div class="form-check">
-                                    {{ subfield(class_="form-check-input") }}
-                                    {{ subfield.label(class_="form-check-label") }}
+                                    <input type="checkbox" name="standards" value="{{ choice_id }}" class="form-check-input" id="standard_{{ choice_id }}">
+                                    <label class="form-check-label" for="standard_{{ choice_id }}">{{ choice_label }}</label>
                                 </div>
                             {% endfor %}
                         </div>
