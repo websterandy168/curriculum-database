@@ -3,3 +3,5 @@ Flask-SQLAlchemy
 Flask-Login
 Flask-WTF
 python-dotenv
+Pillow
+Flask-Cors

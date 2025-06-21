@@ -1,5 +1,9 @@
 import os
 from dotenv import load_dotenv
+import base64
+import io
+import uuid # For unique filenames
+from PIL import Image
 load_dotenv()
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
@@ -22,7 +26,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'da
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'static/uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
+from flask_cors import CORS
 # --- Initialize Extensions ---
 db = SQLAlchemy(app)
 csrf = CSRFProtect(app) # This line now works because of the import
@@ -40,7 +44,7 @@ PREDEFINED_GRADES = ["Pre-Kindergarten", "Kindergarten", "1st Grade", "2nd Grade
 
 # --- User Loader & Forms ---
 @login_manager.user_loader
-def load_user(user_id): return User.query.get(int(user_id))
+def load_user(user_id): return db.session.get(User, int(user_id))
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()]); password = PasswordField('Password', validators=[DataRequired()]); submit = SubmitField('Login')
 class TaskForm(FlaskForm):
@@ -88,9 +92,14 @@ def update_builder():
 @app.route('/builder')
 def builder():
     builder_task_ids = session.get('builder_tasks', [])
-    tasks = Task.query.filter(Task.id.in_(builder_task_ids)).all()
-    if builder_task_ids:
-        tasks.sort(key=lambda x: builder_task_ids.index(x.id))
+    # Fetch all tasks that are in the builder session
+    tasks_in_builder = Task.query.filter(Task.id.in_(builder_task_ids)).all()
+    # Create a dictionary for quick lookups: {task_id: task_object}
+    tasks_by_id = {task.id: task for task in tasks_in_builder}
+    # Reconstruct the tasks list in the exact order from the session.
+    # This also implicitly handles cases where a task ID is in the session
+    # but the task has been deleted from the database.
+    tasks = [tasks_by_id[task_id] for task_id in builder_task_ids if task_id in tasks_by_id]
     worksheet_title = request.args.get('title', 'My Custom Worksheet')
     return render_template('builder.html', tasks=tasks, title=worksheet_title)
 
@@ -102,9 +111,9 @@ def add_task():
         image_file_path = None
         if form.image.data:
             filename = secure_filename(form.image.data.filename); form.image.data.save(os.path.join(app.config['UPLOAD_FOLDER'], filename)); image_file_path = f'uploads/{filename}'
-        new_task = Task(title=form.title.data, description=form.description.data, grade_level=form.grade_level.data, image_path=image_file_path, body_text=form.body_text.data)
-        for skill_id in form.skills.data: new_task.skills.append(Skill.query.get(skill_id))
-        for standard_id in form.standards.data: new_task.standards.append(Standard.query.get(standard_id))
+        new_task = Task(title=form.title.data, description=form.description.data, grade_level=form.grade_level.data, image_path=image_file_path, body_text=form.body_text.data) # type: ignore
+        for skill_id in form.skills.data: new_task.skills.append(db.session.get(Skill, skill_id))
+        for standard_id in form.standards.data: new_task.standards.append(db.session.get(Standard, standard_id))
         if form.new_standards.data:
             for name in [name.strip() for name in form.new_standards.data.split(',')]:
                 if name:
@@ -119,11 +128,11 @@ def add_task():
 @app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit_task(task_id):
-    task = Task.query.get_or_404(task_id); form = TaskForm(obj=task); form.skills.choices = [(s.id, s.name) for s in Skill.query.order_by('name').all()]; form.standards.choices = [(s.id, s.name) for s in Standard.query.order_by('name').all()]
+    task = db.session.get(Task, task_id); form = TaskForm(obj=task); form.skills.choices = [(s.id, s.name) for s in Skill.query.order_by('name').all()]; form.standards.choices = [(s.id, s.name) for s in Standard.query.order_by('name').all()]
     if form.validate_on_submit():
-        task.title = form.title.data; task.description = form.description.data; task.grade_level = form.grade_level.data; task.body_text = form.body_text.data; task.skills.clear(); task.standards.clear()
-        for skill_id in form.skills.data: task.skills.append(Skill.query.get(skill_id))
-        for standard_id in form.standards.data: task.standards.append(Standard.query.get(standard_id))
+        task.title = form.title.data; task.description = form.description.data; task.grade_level = form.grade_level.data; task.body_text = form.body_text.data; task.skills.clear(); task.standards.clear() # type: ignore
+        for skill_id in form.skills.data: task.skills.append(db.session.get(Skill, skill_id))
+        for standard_id in form.standards.data: task.standards.append(db.session.get(Standard, standard_id))
         db.session.commit(); flash('Task has been updated!', 'success'); return redirect(url_for('index'))
     form.skills.data = [skill.id for skill in task.skills]; form.standards.data = [standard.id for standard in task.standards]
     return render_template('edit_task.html', form=form, title="Edit Task", task=task)
@@ -131,7 +140,7 @@ def edit_task(task_id):
 @app.route('/delete_task/<int:task_id>', methods=['POST'])
 @login_required
 def delete_task(task_id):
-    task_to_delete = Task.query.get_or_404(task_id)
+    task_to_delete = db.session.get(Task, task_id) # type: ignore
     if task_to_delete.image_path:
         try:
             file_path_on_disk = os.path.join(app.root_path, 'static', task_to_delete.image_path)
@@ -155,12 +164,52 @@ def manage_tags():
 @app.route('/delete_skill/<int:skill_id>', methods=['POST'])
 @login_required
 def delete_skill(skill_id):
-    db.session.delete(Skill.query.get_or_404(skill_id)); db.session.commit(); return redirect(url_for('manage_tags'))
+    db.session.delete(db.session.get(Skill, skill_id)); db.session.commit(); return redirect(url_for('manage_tags')) # type: ignore
 
 @app.route('/delete_standard/<int:standard_id>', methods=['POST'])
 @login_required
 def delete_standard(standard_id):
-    db.session.delete(Standard.query.get_or_404(standard_id)); db.session.commit(); return redirect(url_for('manage_tags'))
+    db.session.delete(db.session.get(Standard, standard_id)); db.session.commit(); return redirect(url_for('manage_tags')) # type: ignore
+
+@app.route('/editor')
+@login_required
+def visual_editor():
+    """Serves the visual editor page."""
+    return render_template('visual_editor.html', title="Visual Editor")
+
+# New API endpoint for adding tasks from visual editor
+@app.route('/api/add_visual_task', methods=['POST'])
+@login_required
+def add_visual_task():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No JSON data received'}), 400
+
+        title = data.get('title')
+        description = data.get('description', '')
+        grade_level = data.get('grade_level')
+        body_text = data.get('body_text', '')
+        image_data_url = data.get('image_data')
+
+        if not all([title, grade_level, image_data_url]):
+            return jsonify({'success': False, 'error': 'Missing required fields: title, grade_level, image_data'}), 400
+
+        header, encoded = image_data_url.split(',', 1)
+        image_bytes = base64.b64decode(encoded)
+        image_format = 'png'
+        if 'image/jpeg' in header: image_format = 'jpeg'
+
+        filename = f"{uuid.uuid4()}.{image_format}"
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        with open(image_path, 'wb') as f: f.write(image_bytes)
+
+        new_task = Task(title=title, description=description, grade_level=grade_level, image_path=f'uploads/{filename}', body_text=body_text)
+        db.session.add(new_task); db.session.commit()
+        return jsonify({'success': True, 'message': 'Task added successfully', 'task_id': new_task.id}), 201
+    except Exception as e:
+        app.logger.error(f"Error adding visual task: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # --- Main Application Runner ---
 if __name__ == '__main__':

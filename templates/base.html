@@ -23,6 +23,7 @@
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
                     {% if current_user.is_authenticated %}
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('add_task') }}">Add Task</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('visual_editor') }}">Visual Editor</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('manage_tags') }}">Manage Tags</a></li>
                     {% endif %}
                 </ul>

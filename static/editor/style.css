@@ -1,0 +1,348 @@
+:root {
+    --bg-color: #F5F7FA;
+    --text-color: #333333;
+    --primary-blue: #337AB7;
+    --primary-blue-dark: #286090;
+    --heading-blue: #2C5B8A;
+    --accent-blue: #4A90E2;
+    --accent-green: #398439;
+    --accent-green-dark: #2D6A2D;
+    --accent-red: #C9302C;
+    --accent-red-dark: #AC2925;
+    --border-color: #D1D9E6;
+    --border-color-light: #E0E6ED;
+    --panel-bg: #ffffff;
+    --shadow-lg: 0 6px 20px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05);
+    --shadow-focus: 0 0 0 3px rgba(74, 144, 226, 0.2);
+    --border-radius: 12px;
+    --font-family: 'Roboto', sans-serif;
+}
+
+/* Header for navigation back to the main site */
+.editor-header {
+    padding: 10px 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin: -20px -20px 20px -20px; /* Span the full width */
+}
+.editor-header a {
+    text-decoration: none;
+    color: var(--primary-blue);
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* Global reset and base styles */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+h1, h2, h3 {
+    margin-bottom: 15px;
+    text-align: center;
+    color: var(--heading-blue);
+}
+h1 { font-size: 2.8em; margin-top: 0; font-weight: 700; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); } /* Larger, bolder, subtle shadow */
+h2 { font-size: 2em; font-weight: 700; } /* Bolder section titles */
+h3 { font-size: 1.3em; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid var(--border-color-light); padding-bottom: 8px; font-weight: 700; color: var(--accent-blue); } /* Slightly larger, bolder, more prominent */
+
+.main-container {
+    display: grid;
+    grid-template-columns: 240px 1fr 220px; /* Toolbox, Canvas, Properties */
+    gap: 20px;
+    width: 100%;
+    max-width: 1600px; /* Allow it to grow larger */
+    margin: 0 auto; /* h1 now provides top spacing */
+}
+.left-column {
+    /* This column now only holds the canvas, so flex properties are not needed. */
+    min-width: 0; /* Prevents flex/grid items from overflowing */
+}
+.toolbox, .canvas-container, .properties-panel {
+    background-color: var(--panel-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.toolbox {
+    display: flex;
+    flex-direction: column;
+    padding: 25px; /* Increased padding for more breathing room */
+    gap: 12px;
+}
+.toolbox button {
+    background-color: var(--primary-blue); /* WCAG AA compliant blue */
+    color: white; border: none; padding: 10px 15px; border-radius: 8px;
+    letter-spacing: 0.5px; /* Slightly increased letter spacing for buttons */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2); /* Subtle text shadow for pop */
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.toolbox button:hover { background-color: var(--primary-blue-dark); transform: translateY(-1px); } /* Darker hover state, subtle lift */
+/* Focus styles for keyboard navigation */
+.toolbox button:focus-visible,
+.input-group-row select:focus-visible,
+.input-group input[type="file"]:focus-visible,
+#modal-content input:focus-visible{outline: 3px solid #66B3FF; outline-offset: 2px;}
+
+.input-group { display: flex; flex-direction: column; gap: 8px; } /* Increased gap for inputs */
+
+.canvas-container {
+    position: relative; /* Needed for aspect-ratio trick */
+    width: 100%;
+    height: 0;
+    padding-bottom: 75%; /* 4:3 aspect ratio (600/800) */
+}
+
+#editor-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.input-group-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping for smaller screens/more elements */
+    gap: 5px;
+}
+.input-group-row select {
+    flex-grow: 1;
+    padding: 8px; /* More padding */
+    border-radius: 8px; /* More rounded */
+    border: 1px solid var(--border-color); /* Softer border */
+    background-color: #FDFDFD;
+    appearance: none; /* Remove default select arrow */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13.2-6.4H18.2c-4.8%200-9.3%201.8-13.2%206.4-3.9%204.6-6.4%2010.8-6.4%2017.6s2.5%2013%206.4%2017.6l128%20127.9c3.9%203.9%209.2%206.2%2013.2%206.2s9.3-2.3%2013.2-6.2l128-127.9c3.9-4.6%206.4-10.8%206.4-17.6-.1-6.8-2.6-13-6.5-17.6z%22%2F%3E%3C%2Fsvg%3E'); /* Custom arrow */
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+}
+
+.prop-hr {
+    border: none;
+    border-top: 1px solid var(--border-color-light); /* Consistent divider color */
+    margin: 15px 0; /* More vertical space for dividers */
+}
+
+.properties-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 25px; /* Add padding for buffer, consistent with toolbox */
+}
+.properties-panel.hidden { display: none; }
+.properties-panel h3 { margin-top: 0; color: var(--accent-blue); } /* Consistent heading color */
+#properties-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 450px;
+    overflow-y: auto;
+    /* Custom Scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-blue) var(--bg-color);
+}
+#properties-content::-webkit-scrollbar { width: 8px; }
+#properties-content::-webkit-scrollbar-track { background: var(--bg-color); border-radius: 4px; }
+#properties-content::-webkit-scrollbar-thumb { background-color: var(--accent-blue); border-radius: 4px; border: 2px solid var(--bg-color); }
+
+.placeholder-text {
+    font-style: italic;
+    color: #6c757d; /* A soft, secondary gray */
+    text-align: center;
+    padding: 20px 10px;
+    font-size: 14px;
+}
+.prop-group { display: flex; justify-content: space-between; align-items: center; }
+.prop-group label { font-size: 14px; color: #555; }
+.prop-group input {
+    width: 70px;
+    padding: 8px; /* More padding */
+    border: 1px solid var(--border-color); /* Softer border */
+    border-radius: 8px; /* More rounded */
+    background-color: #FDFDFD;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+.prop-group input[type="color"] {
+    min-width: 30px; /* Ensure it has a minimum size */
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+/* Override for properties panel to allow for flexible input widths */
+#properties-content .prop-group {
+    justify-content: flex-start; /* Remove space-between to allow content-based sizing */
+}
+#properties-content .prop-group input {
+    margin-left: auto; /* Push input to the right, creating the space */
+}
+/* Allow disabled (readonly) property inputs to size to their content */
+#properties-content .prop-group input:disabled {
+    width: auto; /* Let the input size itself based on the text inside */
+    min-width: 70px; /* Maintain minimum width for alignment with editable fields */
+}
+.prop-group input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: var(--shadow-focus);
+    background-color: #FFFFFF; /* Keep background white on focus */
+}
+
+.small-btn {
+    padding: 5px 10px !important;
+    font-size: 14px !important;
+    letter-spacing: normal; /* Override general button letter-spacing */
+    text-shadow: none; /* Override general button text-shadow */
+}
+
+.full-width-btn {
+    flex-grow: 1; /* Allow button to grow and fill available space */
+    text-align: center;
+}
+
+.toolbox-columns {
+    display: flex;
+    gap: 20px;
+}
+.toolbox-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-box {
+    position: absolute;
+    background-color: rgba(40, 40, 40, 0.85);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: monospace;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    backdrop-filter: blur(3px); /* Slightly more blur */
+    -webkit-backdrop-filter: blur(3px); /* For Safari */
+
+    pointer-events: none;
+    display: none;
+    z-index: 1000;
+}
+
+#delete-btn {
+    background-color: var(--accent-red);
+    margin-bottom: 5px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2); /* Subtle text shadow for pop */
+}
+#delete-btn:hover {
+    background-color: var(--accent-red-dark);
+}
+
+/* Export button specific styling */
+#export-jpeg { background-color: var(--accent-green); text-shadow: 0 1px 2px rgba(0,0,0,0.2); } /* Accent green, subtle text shadow */
+#export-jpeg:hover { background-color: var(--accent-green-dark); }
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+.modal-overlay.hidden {
+    display: none;
+}
+.modal-container {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 12px; /* Consistent rounded corners */
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25); /* More prominent shadow */
+    width: 90%;
+    max-width: 400px;
+}
+.modal-container h3 { /* Style modal title */
+    color: var(--heading-blue);
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color-light);
+    padding-bottom: 8px;
+}
+.modal-content {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Consistent gap */
+}
+.modal-input-group { display: flex; flex-direction: column; gap: 5px; }
+.modal-input-group label { font-weight: bold; color: #555; }
+#modal-content input {
+    padding: 10px; font-size: 16px; border: 1px solid var(--border-color); border-radius: 8px;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.modal-content input:focus { outline: none; border-color: var(--accent-blue); box-shadow: var(--shadow-focus); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.modal-actions button { background-color: var(--primary-blue); color: white; padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease-in-out; }
+#modal-cancel-btn {
+    background-color: #757575;
+}
+#modal-cancel-btn:hover {
+    background-color: #616161;
+}
+
+/* --- Media Queries for Responsiveness --- */
+
+/* Tablet view */
+@media (max-width: 1200px) {
+    .main-container {
+        grid-template-columns: 240px 1fr; /* Toolbox and main content */
+        grid-template-areas:
+            "toolbox main"
+            "properties main";
+        gap: 15px;
+    }
+    .left-column { grid-area: main; }
+    .toolbox { grid-area: toolbox; }
+    .properties-panel { grid-area: properties; }
+    h1 { font-size: 2.2em; }
+}
+
+/* Mobile view */
+@media (max-width: 768px) {
+    body { padding: 10px; }
+    .main-container {
+        grid-template-columns: 1fr; /* Single column layout */
+        grid-template-areas:
+            "main"
+            "toolbox"
+            "properties";
+    }
+    .left-column { grid-area: main; }
+    .toolbox { grid-area: toolbox; padding: 15px; }
+    .properties-panel { grid-area: properties; padding: 15px; }
+    h1 { font-size: 1.8em; }
+    .canvas-container {
+        /* Adjust aspect ratio for vertical screens if needed */
+        padding-bottom: 100%; /* 1:1 aspect ratio */
+    }
+}

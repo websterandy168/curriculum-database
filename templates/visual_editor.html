@@ -1,0 +1,96 @@
+{% extends "base_editor.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block head_links %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='editor/style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="editor-header">
+    <a href="{{ url_for('index') }}">&larr; Back to Database</a>
+</div>
+
+<h1>Visual Math Editor</h1>
+<div class="main-container">
+    <div class="toolbox"><h2>Toolbox</h2>
+        <div class="prop-group">
+            <label for="unit-selector">Units:</label>
+            <select id="unit-selector">
+                <option value="px">Pixels (px)</option>
+                <option value="in">Inches (in)</option>
+                <option value="cm">Centimeters (cm)</option>
+            </select>
+        </div>
+     <button id="export-jpeg">Export as JPEG</button>
+     <button id="add-to-db-btn">Add to Worksheet DB</button>
+        <hr>
+        <h3>Visual Tools</h3>
+        <button id="add-polygon-btn">Add Polygon (Freehand)</button>
+        <button id="tape-diagram-btn">Tape Diagram</button>
+        <button id="add-dimension-btn">Add Dimension</button>
+        <button id="add-wedge-btn">Add Arc/Wedge</button>
+        <div class="input-group-row">
+            <label for="ngon-sides">N-gon:</label>
+            <select id="ngon-sides">
+                <option value="3">Triangle</option>
+                <option value="4">Square</option>
+                <option value="5">Pentagon</option>
+                <option value="6">Hexagon</option>
+                <option value="8">Octagon</option>
+            </select>
+            <button id="add-ngon-btn" class="small-btn">Add</button>
+        </div>
+        <div class="input-group-row">
+            <button id="add-triangle-btn" class="full-width-btn">Add Triangle</button>
+            <button id="add-parallelogram-btn" class="full-width-btn">Add Parallelogram</button>
+        </div>
+        <div class="input-group">
+            <label for="image-loader">Add Image:</label>
+            <input type="file" id="image-loader" accept="image/*">
+        </div>
+        <hr>
+        <h3>Text & Math</h3>
+        <button id="add-text">Add Text</button>
+        <button class="latex-btn" data-template="fraction">Fraction</button>
+        <button class="latex-btn" data-template="sqrt">Square Root</button>
+        <button class="latex-btn" data-template="power">Exponent</button>
+        <button id="custom-latex-btn">Custom LaTeX</button>
+        <hr>
+        <h3>Settings</h3>
+        <div class="input-group">
+            <label><input type="checkbox" id="snap-to-grid-toggle"> Snap to Grid</label>
+            <label><input type="checkbox" id="show-grid-toggle"> Show Grid</label>
+        </div>
+    </div>
+    <div class="left-column">
+        <div class="canvas-container">
+            <canvas id="editor-canvas"></canvas>
+        </div>
+    </div>
+    <div id="properties-panel" class="properties-panel">
+        <h3>Properties</h3>
+     <div id="properties-content"></div>
+  </div>
+</div>
+
+<div id="custom-modal-overlay" class="modal-overlay hidden">
+    <div id="custom-modal" class="modal-container">
+        <h3 id="modal-title">Input Required</h3>
+     <div id="modal-content" class="modal-content"></div>
+        <div class="modal-actions">
+            <button id="modal-cancel-btn">Cancel</button>
+            <button id="modal-ok-btn">OK</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+    <script src="{{ url_for('static', filename='editor/script.js') }}"></script>
+{% endblock %}
