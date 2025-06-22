@@ -1,17 +1,14 @@
-# Secret environment variables
+# Environment variables
+# Keep your secret keys and other sensitive info out of version control!
 .env
 
-# Python cache and compiled files
-__pycache__/
-*.pyc
-
-# Local database file
+# Database file
 database.db
 
-# Instance folder that can be created by Flask
-instance/
+# Python artifacts
+__pycache__/
+*.py[cod]
 
-# Common virtual environment folder names
-venv/
-*.env/
-env/
+# IDE and editor directories
+.vscode/
+.idea/

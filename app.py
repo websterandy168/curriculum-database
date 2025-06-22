@@ -22,7 +22,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-print(f"--- SECRET KEY LOADED: {app.config['SECRET_KEY']} ---")
+app.logger.info(f"--- SECRET KEY LOADED: {'Yes' if app.config['SECRET_KEY'] else 'No'} ---")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'static/uploads')
@@ -218,14 +218,20 @@ def edit_task(task_id):
 @app.route('/delete_task/<int:task_id>', methods=['POST'])
 @login_required
 def delete_task(task_id):
-    task_to_delete = db.session.get(Task, task_id) # type: ignore
-    if task_to_delete.image_path:
-        try:
-            file_path_on_disk = os.path.join(app.root_path, 'static', task_to_delete.image_path)
-            if os.path.exists(file_path_on_disk):
-                os.remove(file_path_on_disk)
-        except Exception as e: print(f"Error deleting file: {e}")
-    db.session.delete(task_to_delete); db.session.commit(); flash('Task has been deleted.', 'success')
+    task_to_delete = db.session.get(Task, task_id)
+    if task_to_delete:
+        if task_to_delete.image_path:
+            try:
+                file_path_on_disk = os.path.join(app.root_path, 'static', task_to_delete.image_path)
+                if os.path.exists(file_path_on_disk):
+                    os.remove(file_path_on_disk)
+            except Exception as e:
+                app.logger.error(f"Error deleting file {task_to_delete.image_path}: {e}")
+        db.session.delete(task_to_delete)
+        db.session.commit()
+        flash('Task has been deleted.', 'success')
+    else:
+        flash('Task not found.', 'danger')
     return redirect(url_for('index'))
 
 @app.route('/add_video', methods=['GET', 'POST'])
@@ -320,12 +326,22 @@ def manage_tags():
 @app.route('/delete_skill/<int:skill_id>', methods=['POST'])
 @login_required
 def delete_skill(skill_id):
-    db.session.delete(db.session.get(Skill, skill_id)); db.session.commit(); return redirect(url_for('manage_tags')) # type: ignore
+    skill_to_delete = db.session.get(Skill, skill_id)
+    if skill_to_delete:
+        db.session.delete(skill_to_delete)
+        db.session.commit()
+        flash('Skill has been deleted.', 'success')
+    return redirect(url_for('manage_tags'))
 
 @app.route('/delete_standard/<int:standard_id>', methods=['POST'])
 @login_required
 def delete_standard(standard_id):
-    db.session.delete(db.session.get(Standard, standard_id)); db.session.commit(); return redirect(url_for('manage_tags')) # type: ignore
+    standard_to_delete = db.session.get(Standard, standard_id)
+    if standard_to_delete:
+        db.session.delete(standard_to_delete)
+        db.session.commit()
+        flash('Standard has been deleted.', 'success')
+    return redirect(url_for('manage_tags'))
 
 @app.route('/editor')
 @login_required
