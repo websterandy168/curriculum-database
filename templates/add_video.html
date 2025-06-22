@@ -5,25 +5,21 @@
         <div class="col-md-8 offset-md-2">
             <h1>{{ title }}</h1>
             <hr class="mb-4">
-            <form method="POST" enctype="multipart/form-data" novalidate>
-                {{ form.hidden_tag() }} <div class="mb-3">{{ form.title.label(class="form-label") }}{{ form.title(class_="form-control") }}</div>
-                <div class="mb-3">{{ form.description.label(class="form-label") }}{{ form.description(class_="form-control", rows="2") }}</div>
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+                <div class="mb-3">{{ form.title.label(class="form-label") }}{{ form.title(class_="form-control") }}</div>
+                <div class="mb-3">{{ form.description.label(class="form-label") }}{{ form.description(class_="form-control", rows="3") }}</div>
+                <div class="mb-3">{{ form.youtube_url.label(class="form-label") }}{{ form.youtube_url(class_="form-control", placeholder="e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ") }}</div>
                 <div class="mb-3">{{ form.grade_level.label(class="form-label") }}{{ form.grade_level(class_="form-select") }}</div>
-                <hr>
-                <div class="mb-3">{{ form.image.label(class="form-label") }}{{ form.image(class_="form-control") }}</div>
-                <div class="mb-3">
-                    {{ form.body_text.label(class="form-label") }}
-                    {{ form.body_text(class_="form-control", rows="8", placeholder="<p>What is 2+2?</p><p>Use the formula $$a^2+b^2=c^2$$ to solve.</p>") }}
-                </div>
                 <hr>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Skills</label>
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                            {% for subfield in form.skills %}
+                            {% for choice in form.skills %}
                                 <div class="form-check">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
+                                    {{ choice(class="form-check-input") }}
+                                    {{ choice.label(class="form-check-label") }}
                                 </div>
                             {% endfor %}
                         </div>
@@ -31,16 +27,16 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Standards</label>
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                           {% for subfield in form.standards %}
+                           {% for choice in form.standards %}
                                 <div class="form-check">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
+                                    {{ choice(class="form-check-input") }}
+                                    {{ choice.label(class="form-check-label") }}
                                 </div>
                             {% endfor %}
                         </div>
                         <div class="mt-3">
                             {{ form.new_standards.label(class="form-label") }}
-                            {{ form.new_standards(class_="form-control", placeholder="e.g., CCSS.MATH.4.NBT.A.1, ...") }}
+                            {{ form.new_standards(class_="form-control", placeholder="e.g., CCSS.ELA-LITERACY.L.K.1, ...") }}
                         </div>
                     </div>
                 </div>

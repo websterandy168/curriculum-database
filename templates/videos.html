@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Videos - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Videos</h1>
+            <p>A collection of educational videos for various topics and grade levels.</p>
+        </div>
+    </div>
+
+    <!-- Search and Filter Form -->
+    <div class="row mb-4">
+        <div class="col">
+            <form method="GET" action="{{ url_for('videos') }}" class="row g-3 align-items-center bg-light p-3 rounded">
+                <div class="col-md-4">
+                    <label for="q" class="visually-hidden">Search by Title</label>
+                    <input type="text" class="form-control" id="q" name="q" placeholder="Search by title..." value="{{ request.args.get('q', '') }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="grade" class="visually-hidden">Grade</label>
+                    <select id="grade" name="grade" class="form-select">
+                        <option value="">All Grades</option>
+                        {% for grade in grade_levels %}
+                            <option value="{{ grade }}" {% if request.args.get('grade') == grade %}selected{% endif %}>{{ grade }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="skill_id" class="visually-hidden">Skill</label>
+                    <select id="skill_id" name="skill_id" class="form-select">
+                        <option value="">All Skills</option>
+                        {% for skill in all_skills %}
+                            <option value="{{ skill.id }}" {% if request.args.get('skill_id')|int == skill.id %}selected{% endif %}>{{ skill.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Video Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for video in videos %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="ratio ratio-16x9">
+                    <iframe src="https://www.youtube.com/embed/{{ video.youtube_id }}" title="{{ video.title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ video.title }}</h5>
+                    <p class="card-text"><small class="text-muted">{{ video.grade_level }}</small></p>
+                    {% if video.description %}<p class="card-text">{{ video.description }}</p>{% endif %}
+                    <div class="mt-auto pt-2">{% for skill in video.skills %}<span class="badge bg-secondary me-1">{{ skill.name }}</span>{% endfor %}</div>
+                </div>
+                {% if current_user.is_authenticated %}
+                <div class="card-footer text-end bg-white border-top-0">
+                    <a href="{{ url_for('edit_video', video_id=video.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    <form action="{{ url_for('delete_video', video_id=video.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this video?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="col"><p>No videos found matching your criteria. Try adjusting your filters.</p></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 import base64
 import io
+import re # For YouTube ID extraction
 import uuid # For unique filenames
 from PIL import Image
 load_dotenv()
@@ -36,10 +37,50 @@ login_manager.login_view = 'login'
 # --- Database Models ---
 task_skill = db.Table('task_skill', db.Column('task_id', db.Integer, db.ForeignKey('task.id')), db.Column('skill_id', db.Integer, db.ForeignKey('skill.id')))
 task_standard = db.Table('task_standard', db.Column('task_id', db.Integer, db.ForeignKey('task.id')), db.Column('standard_id', db.Integer, db.ForeignKey('standard.id')))
-class User(db.Model, UserMixin): id, username, password_hash = db.Column(db.Integer, primary_key=True), db.Column(db.String(20), unique=True, nullable=False), db.Column(db.String(128))
-class Task(db.Model): id, title, description, grade_level, image_path, body_text, skills, standards = db.Column(db.Integer, primary_key=True), db.Column(db.String(200), nullable=False), db.Column(db.Text, nullable=True), db.Column(db.String(50), nullable=False), db.Column(db.String(300), nullable=True), db.Column(db.Text, nullable=False), db.relationship('Skill', secondary=task_skill, backref='tasks'), db.relationship('Standard', secondary=task_standard, backref='tasks')
-class Skill(db.Model): id, name = db.Column(db.Integer, primary_key=True), db.Column(db.String(100), unique=True, nullable=False)
-class Standard(db.Model): id, name = db.Column(db.Integer, primary_key=True), db.Column(db.String(100), unique=True, nullable=False)
+
+video_skill = db.Table('video_skill',
+    db.Column('video_id', db.Integer, db.ForeignKey('video.id'), primary_key=True),
+    db.Column('skill_id', db.Integer, db.ForeignKey('skill.id'), primary_key=True)
+)
+
+video_standard = db.Table('video_standard',
+    db.Column('video_id', db.Integer, db.ForeignKey('video.id'), primary_key=True),
+    db.Column('standard_id', db.Integer, db.ForeignKey('standard.id'), primary_key=True)
+)
+
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    grade_level = db.Column(db.String(50), nullable=False)
+    image_path = db.Column(db.String(300), nullable=True)
+    body_text = db.Column(db.Text, nullable=False)
+    skills = db.relationship('Skill', secondary=task_skill, backref='tasks')
+    standards = db.relationship('Standard', secondary=task_standard, backref='tasks')
+
+class Video(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    youtube_id = db.Column(db.String(20), nullable=False, unique=True)
+    grade_level = db.Column(db.String(50), nullable=False)
+    skills = db.relationship('Skill', secondary=video_skill, backref='videos')
+    standards = db.relationship('Standard', secondary=video_standard, backref='videos')
+
+class Skill(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+class Standard(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
 PREDEFINED_GRADES = ["Pre-Kindergarten", "Kindergarten", "1st Grade", "2nd Grade", "3rd Grade", "4th Grade", "5th Grade", "6th Grade", "7th Grade", "8th Grade", "9th Grade", "10th Grade", "11th Grade", "12th Grade"]
 
 # --- User Loader & Forms ---
@@ -49,6 +90,22 @@ class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()]); password = PasswordField('Password', validators=[DataRequired()]); submit = SubmitField('Login')
 class TaskForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()]); description = TextAreaField('Internal Description (optional)'); grade_level = SelectField('Grade Level', choices=PREDEFINED_GRADES, validators=[DataRequired()]); image = FileField('Task Image (optional)', validators=[FileAllowed(['jpg', 'png', 'gif'], 'Images only!')]); body_text = TextAreaField('Task Body (HTML with LaTeX math)', validators=[DataRequired()]); skills = SelectMultipleField('Skills', coerce=int, validators=[Optional()]); standards = SelectMultipleField('Standards', coerce=int, validators=[Optional()]); new_standards = StringField('Or Add New Standards (comma-separated)', validators=[Optional()]); submit = SubmitField('Submit Task')
+class VideoForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    description = TextAreaField('Description (optional)')
+    youtube_url = StringField('YouTube URL', validators=[DataRequired()])
+    grade_level = SelectField('Grade Level', choices=PREDEFINED_GRADES, validators=[DataRequired()])
+    skills = SelectMultipleField('Skills', coerce=int, validators=[Optional()])
+    standards = SelectMultipleField('Standards', coerce=int, validators=[Optional()])
+    new_standards = StringField('Or Add New Standards (comma-separated)', validators=[Optional()])
+    submit = SubmitField('Submit Video')
+
+def extract_youtube_id(url):
+    """Extracts YouTube video ID from various URL formats."""
+    match = re.search(r"(?:v=|\/shorts\/|\/live\/|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})", url)
+    if match:
+        return match.group(1)
+    return None
 
 # --- Routes ---
 @app.route('/')
@@ -61,6 +118,22 @@ def index():
     all_skills = Skill.query.order_by(Skill.name).all(); all_standards = Standard.query.order_by(Standard.name).all()
     builder_task_ids = session.get('builder_tasks', [])
     return render_template('index.html', tasks=tasks, grade_levels=PREDEFINED_GRADES, all_skills=all_skills, all_standards=all_standards, builder_task_ids=builder_task_ids)
+
+@app.route('/videos')
+def videos():
+    query = Video.query
+    search_grade = request.args.get('grade')
+    search_skill_id = request.args.get('skill_id')
+    search_text = request.args.get('q')
+    if search_grade:
+        query = query.filter(Video.grade_level == search_grade)
+    if search_skill_id:
+        query = query.filter(Video.skills.any(id=search_skill_id))
+    if search_text:
+        query = query.filter(Video.title.ilike(f'%{search_text}%'))
+    videos = query.order_by(Video.title).all()
+    all_skills = Skill.query.order_by(Skill.name).all()
+    return render_template('videos.html', videos=videos, grade_levels=PREDEFINED_GRADES, all_skills=all_skills)
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -128,13 +201,18 @@ def add_task():
 @app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit_task(task_id):
-    task = db.session.get(Task, task_id); form = TaskForm(obj=task); form.skills.choices = [(s.id, s.name) for s in Skill.query.order_by('name').all()]; form.standards.choices = [(s.id, s.name) for s in Standard.query.order_by('name').all()]
+    task = db.session.get(Task, task_id)
+    form = TaskForm(obj=task)
+    form.skills.choices = [(s.id, s.name) for s in Skill.query.order_by('name').all()]
+    form.standards.choices = [(s.id, s.name) for s in Standard.query.order_by('name').all()]
     if form.validate_on_submit():
         task.title = form.title.data; task.description = form.description.data; task.grade_level = form.grade_level.data; task.body_text = form.body_text.data; task.skills.clear(); task.standards.clear() # type: ignore
         for skill_id in form.skills.data: task.skills.append(db.session.get(Skill, skill_id))
         for standard_id in form.standards.data: task.standards.append(db.session.get(Standard, standard_id))
         db.session.commit(); flash('Task has been updated!', 'success'); return redirect(url_for('index'))
-    form.skills.data = [skill.id for skill in task.skills]; form.standards.data = [standard.id for standard in task.standards]
+    elif request.method == 'GET':
+        form.skills.data = [skill.id for skill in task.skills]
+        form.standards.data = [standard.id for standard in task.standards]
     return render_template('edit_task.html', form=form, title="Edit Task", task=task)
 
 @app.route('/delete_task/<int:task_id>', methods=['POST'])
@@ -149,6 +227,84 @@ def delete_task(task_id):
         except Exception as e: print(f"Error deleting file: {e}")
     db.session.delete(task_to_delete); db.session.commit(); flash('Task has been deleted.', 'success')
     return redirect(url_for('index'))
+
+@app.route('/add_video', methods=['GET', 'POST'])
+@login_required
+def add_video():
+    form = VideoForm()
+    form.skills.choices = [(s.id, s.name) for s in Skill.query.order_by('name').all()]
+    form.standards.choices = [(s.id, s.name) for s in Standard.query.order_by('name').all()]
+    if form.validate_on_submit():
+        youtube_id = extract_youtube_id(form.youtube_url.data)
+        if not youtube_id:
+            flash('Invalid YouTube URL. Please provide a valid video link.', 'danger')
+            return render_template('add_video.html', form=form, title="Add New Video")
+        existing_video = Video.query.filter_by(youtube_id=youtube_id).first()
+        if existing_video:
+            flash('This YouTube video has already been added.', 'warning')
+            return redirect(url_for('videos'))
+        new_video = Video(title=form.title.data, description=form.description.data, youtube_id=youtube_id, grade_level=form.grade_level.data)
+        for skill_id in form.skills.data: new_video.skills.append(db.session.get(Skill, skill_id))
+        for standard_id in form.standards.data: new_video.standards.append(db.session.get(Standard, standard_id))
+        if form.new_standards.data:
+            for name in [name.strip() for name in form.new_standards.data.split(',')]:
+                if name:
+                    existing_standard = Standard.query.filter_by(name=name).first()
+                    if existing_standard:
+                        if existing_standard not in new_video.standards: new_video.standards.append(existing_standard)
+                    else:
+                        new_standard_obj = Standard(name=name); db.session.add(new_standard_obj); new_video.standards.append(new_standard_obj)
+        db.session.add(new_video); db.session.commit()
+        flash('New video has been successfully added!', 'success')
+        return redirect(url_for('videos'))
+    return render_template('add_video.html', form=form, title="Add New Video")
+
+@app.route('/edit_video/<int:video_id>', methods=['GET', 'POST'])
+@login_required
+def edit_video(video_id):
+    video = db.session.get(Video, video_id)
+    if not video:
+        flash('Video not found.', 'danger'); return redirect(url_for('videos'))
+    form = VideoForm(obj=video)
+    form.skills.choices = [(s.id, s.name) for s in Skill.query.order_by('name').all()]
+    form.standards.choices = [(s.id, s.name) for s in Standard.query.order_by('name').all()]
+    if form.validate_on_submit():
+        youtube_id = extract_youtube_id(form.youtube_url.data)
+        if not youtube_id:
+            flash('Invalid YouTube URL.', 'danger')
+            return render_template('add_video.html', form=form, title="Edit Video", video=video)
+        existing_video = Video.query.filter(Video.youtube_id == youtube_id, Video.id != video_id).first()
+        if existing_video:
+            flash('Another video with this YouTube ID already exists.', 'danger')
+            return render_template('add_video.html', form=form, title="Edit Video", video=video)
+        video.title = form.title.data; video.description = form.description.data; video.youtube_id = youtube_id; video.grade_level = form.grade_level.data
+        video.skills.clear(); video.standards.clear()
+        for skill_id in form.skills.data: video.skills.append(db.session.get(Skill, skill_id))
+        for standard_id in form.standards.data: video.standards.append(db.session.get(Standard, standard_id))
+        if form.new_standards.data:
+            for name in [name.strip() for name in form.new_standards.data.split(',')]:
+                if name:
+                    existing_standard = Standard.query.filter_by(name=name).first()
+                    if existing_standard:
+                        if existing_standard not in video.standards: video.standards.append(existing_standard)
+                    else:
+                        new_standard_obj = Standard(name=name); db.session.add(new_standard_obj); video.standards.append(new_standard_obj)
+        db.session.commit()
+        flash('Video has been updated!', 'success')
+        return redirect(url_for('videos'))
+    elif request.method == 'GET':
+        form.youtube_url.data = f"https://www.youtube.com/watch?v={video.youtube_id}"
+        form.skills.data = [skill.id for skill in video.skills]
+        form.standards.data = [standard.id for standard in video.standards]
+    return render_template('add_video.html', form=form, title="Edit Video", video=video)
+
+@app.route('/delete_video/<int:video_id>', methods=['POST'])
+@login_required
+def delete_video(video_id):
+    video_to_delete = db.session.get(Video, video_id)
+    if video_to_delete: db.session.delete(video_to_delete); db.session.commit(); flash('Video has been deleted.', 'success')
+    else: flash('Video not found.', 'danger')
+    return redirect(url_for('videos'))
 
 @app.route('/manage', methods=['GET', 'POST'])
 @login_required
