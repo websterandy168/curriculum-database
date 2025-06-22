@@ -32,12 +32,13 @@
                     <select id="skill_id" name="skill_id" class="form-select">
                         <option value="">All Skills</option>
                         {% for skill in all_skills %}
-                            <option value="{{ skill.id }}" {% if request.args.get('skill_id')|int == skill.id %}selected{% endif %}>{{ skill.name }}</option>
+                            <option value="{{ skill.id }}" {% if request.args.get('skill_id') and request.args.get('skill_id')|int == skill.id %}selected{% endif %}>{{ skill.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 me-2">Filter</button>
+                    <a href="{{ url_for('videos') }}" class="btn btn-secondary">Clear</a>
                 </div>
             </form>
         </div>

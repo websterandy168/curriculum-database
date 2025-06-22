@@ -24,10 +24,10 @@
                      <div class="col-md-6 mb-3">
                         <label class="form-label">Skills</label>
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                            {% for choice_id, choice_label in form.skills.choices %}
+                            {% for subfield in form.skills %}
                                 <div class="form-check">
-                                    <input type="checkbox" name="skills" value="{{ choice_id }}" class="form-check-input" id="skill_{{ choice_id }}" {% if choice_id in form.skills.data %}checked{% endif %}>
-                                    <label class="form-check-label" for="skill_{{ choice_id }}">{{ choice_label }}</label>
+                                    {{ subfield(class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
                                 </div>
                             {% endfor %}
                         </div>
@@ -35,10 +35,10 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Standards</label>
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
-                           {% for choice_id, choice_label in form.standards.choices %}
+                           {% for subfield in form.standards %}
                                 <div class="form-check">
-                                    <input type="checkbox" name="standards" value="{{ choice_id }}" class="form-check-input" id="standard_{{ choice_id }}" {% if choice_id in form.standards.data %}checked{% endif %}>
-                                    <label class="form-check-label" for="standard_{{ choice_id }}">{{ choice_label }}</label>
+                                    {{ subfield(class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
                                 </div>
                             {% endfor %}
                         </div>
