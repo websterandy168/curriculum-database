@@ -31,9 +31,8 @@
                     <label for="skill_id" class="visually-hidden">Skill</label>
                     <select id="skill_id" name="skill_id" class="form-select">
                         <option value="">All Skills</option>
-                        {% set selected_id = request.args.get('skill_id', '') %}
                         {% for skill in all_skills %}
-                            <option value="{{ skill.id }}" {% if selected_id and skill.id|string == selected_id %}selected{% endif %}>{{ skill.name }}</option>
+                            <option value="{{ skill.id }}" {% if skill.id|string == request.args.get('skill_id') %}selected{% endif %}>{{ skill.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
